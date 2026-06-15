@@ -641,8 +641,8 @@ function Sparkline({ data, color = N.ink, w = 60, h = 18 }: { data: number[]; co
 function CategoryBadge({ cat }: { cat: Category }) {
   const m = CAT_COLOR[cat];
   return (
-    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium" style={{ background: m.bg, color: m.text }}>
-      <span className="w-1.5 h-1.5 rounded-full" style={{ background: m.solid }} />
+    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium whitespace-nowrap" style={{ background: m.bg, color: m.text }}>
+      <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: m.solid }} />
       {cat}
     </span>
   );
@@ -920,7 +920,7 @@ const UTILITY_PAGES: { key?: View; label: string; tint: string; color: string; i
   { label: "설정", tint: N.surface, color: N.steel, icon: "cog" },
 ];
 
-function Sidebar({ view, setView, goToDetail }: { view: View; setView: (v: View) => void; goToDetail: (id?: string) => void }) {
+function Sidebar({ view, setView, goToDetail, mobileOpen = false, closeMobile }: { view: View; setView: (v: View) => void; goToDetail: (id?: string) => void; mobileOpen?: boolean; closeMobile?: () => void }) {
   const { openModal, comingSoon, instructors } = useApp();
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({ fav: true, pages: true, util: true });
   const [openPages, setOpenPages] = useState<Record<string, boolean>>({ instructors: true });
@@ -940,7 +940,23 @@ function Sidebar({ view, setView, goToDetail }: { view: View; setView: (v: View)
   );
 
   return (
-    <aside className="w-[244px] flex-shrink-0 bg-[#fafaf9] border-r border-[#e5e3df] flex flex-col">
+    <>
+    {/* 모바일 드로어 백드롭 */}
+    <div
+      onClick={closeMobile}
+      className={`fixed inset-0 z-40 bg-[#0a1530]/40 backdrop-blur-[1px] lg:hidden transition-opacity duration-200 ${mobileOpen ? "opacity-100" : "opacity-0 pointer-events-none"}`}
+    />
+    <aside
+      className={`fixed lg:static inset-y-0 left-0 z-50 w-[268px] lg:w-[244px] flex-shrink-0 bg-[#fafaf9] border-r border-[#e5e3df] flex flex-col transition-transform duration-200 lg:transition-none ${mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}`}
+    >
+      {/* 모바일 닫기 버튼 */}
+      <button
+        onClick={closeMobile}
+        className="lg:hidden absolute top-2.5 right-2 w-7 h-7 rounded-md hover:bg-[#ede9e4] flex items-center justify-center text-[#787671] z-10"
+        aria-label="메뉴 닫기"
+      >
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+      </button>
       {/* Workspace switcher */}
       <div className="px-2 pt-2.5 pb-1.5">
         <button onClick={() => comingSoon("워크스페이스 전환")} className="w-full flex items-center gap-1.5 px-1.5 py-1.5 rounded-md hover:bg-[#ede9e4] transition group">
@@ -1082,6 +1098,7 @@ function Sidebar({ view, setView, goToDetail }: { view: View; setView: (v: View)
         </div>
       </div>
     </aside>
+    </>
   );
 }
 
@@ -1089,28 +1106,32 @@ function Sidebar({ view, setView, goToDetail }: { view: View; setView: (v: View)
    TOPBAR — Notion breadcrumb header
    ═══════════════════════════════════════════════════════════ */
 
-function Topbar({ view, breadcrumb, goBack, goForward, canBack, canForward }: { view: View; breadcrumb: { tint: string; color: string; icon: keyof typeof ICON_PATHS; label: string; parent?: string }[]; goBack: () => void; goForward: () => void; canBack: boolean; canForward: boolean }) {
+function Topbar({ view, breadcrumb, goBack, goForward, canBack, canForward, onMenu }: { view: View; breadcrumb: { tint: string; color: string; icon: keyof typeof ICON_PATHS; label: string; parent?: string }[]; goBack: () => void; goForward: () => void; canBack: boolean; canForward: boolean; onMenu?: () => void }) {
   const { comingSoon, pushToast } = useApp();
   const [faved, setFaved] = useState(false);
   return (
-    <header className="h-[44px] flex-shrink-0 border-b border-[#e5e3df] bg-white px-3 flex items-center justify-between">
+    <header className="h-[44px] flex-shrink-0 border-b border-[#e5e3df] bg-white px-2 sm:px-3 flex items-center justify-between">
       {/* Left: history + breadcrumb */}
       <div className="flex items-center gap-0.5 min-w-0">
-        <button onClick={goBack} disabled={!canBack} className={`w-7 h-7 rounded flex items-center justify-center transition ${canBack ? "hover:bg-[#f0eeec] text-[#5d5b54]" : "text-[#d4d1cc] cursor-default"}`} title="뒤로 가기">
+        {/* 모바일 햄버거 메뉴 */}
+        <button onClick={onMenu} className="lg:hidden w-8 h-8 rounded flex items-center justify-center hover:bg-[#f0eeec] text-[#37352f] flex-shrink-0" aria-label="메뉴 열기">
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5M3.75 17.25h16.5"/></svg>
+        </button>
+        <button onClick={goBack} disabled={!canBack} className={`hidden sm:flex w-7 h-7 rounded items-center justify-center transition ${canBack ? "hover:bg-[#f0eeec] text-[#5d5b54]" : "text-[#d4d1cc] cursor-default"}`} title="뒤로 가기">
           <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5"/></svg>
         </button>
-        <button onClick={goForward} disabled={!canForward} className={`w-7 h-7 rounded flex items-center justify-center transition ${canForward ? "hover:bg-[#f0eeec] text-[#5d5b54]" : "text-[#d4d1cc] cursor-default"}`} title="앞으로 가기">
+        <button onClick={goForward} disabled={!canForward} className={`hidden sm:flex w-7 h-7 rounded items-center justify-center transition ${canForward ? "hover:bg-[#f0eeec] text-[#5d5b54]" : "text-[#d4d1cc] cursor-default"}`} title="앞으로 가기">
           <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5"/></svg>
         </button>
-        <div className="flex items-center gap-0.5 ml-1 min-w-0">
+        <div className="flex items-center gap-0.5 ml-0.5 sm:ml-1 min-w-0">
           {breadcrumb.map((b, i) => (
-            <div key={i} className="flex items-center gap-0.5 min-w-0">
+            <div key={i} className={`items-center gap-0.5 min-w-0 ${i === breadcrumb.length - 1 ? "flex" : "hidden sm:flex"}`}>
               <button className="flex items-center gap-1.5 px-1.5 py-1 rounded hover:bg-[#f0eeec] transition min-w-0">
                 <PageIcon tint={b.tint} color={b.color} icon={b.icon} />
                 <span className={`text-[13px] truncate ${i === breadcrumb.length - 1 ? "text-[#1a1a1a] font-medium" : "text-[#787671]"}`}>{b.label}</span>
               </button>
               {i < breadcrumb.length - 1 && (
-                <span className="text-[#bbb8b1] text-[12px] px-0.5">/</span>
+                <span className="text-[#bbb8b1] text-[12px] px-0.5 hidden sm:inline">/</span>
               )}
             </div>
           ))}
@@ -1118,10 +1139,10 @@ function Topbar({ view, breadcrumb, goBack, goForward, canBack, canForward }: { 
       </div>
 
       {/* Right: actions */}
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-0.5 sm:gap-1 flex-shrink-0">
         <span className="text-[11.5px] text-[#a4a097] mr-2 hidden md:inline">3분 전 편집</span>
-        <button onClick={() => comingSoon("공유 및 권한")} className="px-2.5 py-1 rounded hover:bg-[#f0eeec] text-[13px] text-[#37352f] font-medium transition">공유</button>
-        <button onClick={() => comingSoon("댓글")} className="w-7 h-7 rounded hover:bg-[#f0eeec] flex items-center justify-center text-[#5d5b54]" aria-label="댓글">
+        <button onClick={() => comingSoon("공유 및 권한")} className="px-2.5 py-1 rounded hover:bg-[#f0eeec] text-[13px] text-[#37352f] font-medium transition hidden sm:inline-flex">공유</button>
+        <button onClick={() => comingSoon("댓글")} className="hidden sm:flex w-7 h-7 rounded hover:bg-[#f0eeec] items-center justify-center text-[#5d5b54]" aria-label="댓글">
           <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.6} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48.432.447.74 1.04.586 1.641a4.483 4.483 0 01-.923 1.785A.75.75 0 005.25 22a8.964 8.964 0 003.74-.789 9.04 9.04 0 003.01.539z"/></svg>
         </button>
         <button onClick={() => comingSoon("알림")} className="w-7 h-7 rounded hover:bg-[#f0eeec] flex items-center justify-center text-[#5d5b54] relative" aria-label="알림">
@@ -1130,7 +1151,7 @@ function Topbar({ view, breadcrumb, goBack, goForward, canBack, canForward }: { 
         </button>
         <button
           onClick={() => { setFaved((f) => !f); pushToast({ variant: faved ? "info" : "success", title: faved ? "즐겨찾기에서 제거됨" : "즐겨찾기에 추가됨" }); }}
-          className="w-7 h-7 rounded hover:bg-[#f0eeec] flex items-center justify-center transition"
+          className="hidden sm:flex w-7 h-7 rounded hover:bg-[#f0eeec] items-center justify-center transition"
           style={{ color: faved ? "#d4af1a" : "#5d5b54" }}
           aria-label="즐겨찾기"
         >
@@ -1152,7 +1173,7 @@ function Dashboard({ goToDetail }: { goToDetail: (id?: string) => void }) {
   const { openModal, comingSoon } = useApp();
   const [calloutOpen, setCalloutOpen] = useState(true);
   return (
-    <div className="px-12 py-8 max-w-[1180px] mx-auto">
+    <div className="px-4 sm:px-6 lg:px-12 py-5 sm:py-8 max-w-[1180px] mx-auto">
       {/* ── Notion page header ── */}
       <div className="mb-5">
         <div className="flex items-center gap-2 text-[12px] text-[#787671] mb-3 -ml-1">
@@ -1173,7 +1194,7 @@ function Dashboard({ goToDetail }: { goToDetail: (id?: string) => void }) {
             <Icon p="chartBar" className="w-7 h-7" strokeWidth={1.6} />
           </div>
           <div className="flex-1 min-w-0 pt-1">
-            <h1 className="text-[40px] font-semibold tracking-[-0.8px] leading-[1.1] text-[#1a1a1a]">대시보드</h1>
+            <h1 className="text-[28px] sm:text-[40px] font-semibold tracking-[-0.8px] leading-[1.1] text-[#1a1a1a]">대시보드</h1>
           </div>
         </div>
 
@@ -1231,17 +1252,17 @@ function Dashboard({ goToDetail }: { goToDetail: (id?: string) => void }) {
         <div className="absolute -bottom-32 -right-20 w-96 h-96 rounded-full bg-[#5645d4]/30 blur-3xl pointer-events-none" />
         <div className="absolute -top-20 -left-10 w-64 h-64 rounded-full bg-[#ff64c8]/15 blur-3xl pointer-events-none" />
 
-        <div className="relative px-9 py-9">
+        <div className="relative px-5 py-7 sm:px-9 sm:py-9">
           <div className="text-[11px] font-semibold uppercase tracking-[1.5px] text-white/50 mb-3">강사관리 프로그램 · 5월 운영 보고</div>
-          <h2 className="text-[44px] font-semibold tracking-[-1.2px] leading-[1.05] text-white">
+          <h2 className="text-[28px] sm:text-[44px] font-semibold tracking-[-1.2px] leading-[1.1] sm:leading-[1.05] text-white">
             안녕하세요, 박지원님<br/>
             <span className="text-white/70">5월은 최고의 한 달이에요</span>
           </h2>
-          <p className="text-[15px] text-white/60 mt-4 max-w-[560px] leading-relaxed">
+          <p className="text-[14px] sm:text-[15px] text-white/60 mt-4 max-w-[560px] leading-relaxed">
             이번 달 매출이 지난 달 대비 <span className="text-white font-semibold">+18% 늘었고</span>,
             <span className="text-white font-semibold"> 8,082명</span>의 수강생이 7명의 활동 강사와 함께하고 있어요.
           </p>
-          <div className="flex items-center gap-2 mt-7">
+          <div className="flex flex-wrap items-center gap-2 mt-6 sm:mt-7">
             <button onClick={() => openModal({ kind: "add-instructor" })} className="px-4 py-2 text-[13.5px] font-medium bg-[#5645d4] hover:bg-[#4534b3] text-white rounded-md transition flex items-center gap-1.5">
               <Icon p="plus" className="w-3.5 h-3.5" strokeWidth={2.2} />
               새 강사 등록
@@ -1460,7 +1481,7 @@ function Instructors({ goToDetail }: { goToDetail: (id?: string) => void }) {
       : roster.filter((i) => i.category === label).length;
 
   return (
-    <div className="px-12 py-8 max-w-[1180px] mx-auto">
+    <div className="px-4 sm:px-6 lg:px-12 py-5 sm:py-8 max-w-[1180px] mx-auto">
       {/* Notion page header */}
       <div className="mb-2">
         <div className="flex items-center gap-2 text-[12px] text-[#787671] mb-3 -ml-1">
@@ -1475,14 +1496,14 @@ function Instructors({ goToDetail }: { goToDetail: (id?: string) => void }) {
             <Icon p="users" className="w-7 h-7 text-[#5645d4]" strokeWidth={1.6} />
           </div>
           <div className="flex-1 min-w-0 pt-1">
-            <h1 className="text-[40px] font-semibold tracking-[-0.8px] leading-[1.1] text-[#1a1a1a]">강사</h1>
+            <h1 className="text-[28px] sm:text-[40px] font-semibold tracking-[-0.8px] leading-[1.1] text-[#1a1a1a]">강사</h1>
             <p className="text-[14px] text-[#787671] leading-[1.5] mt-2">파트너 강사 데이터베이스 · 활성 22 · 온보딩 2 · 휴직 1</p>
           </div>
         </div>
       </div>
 
       {/* Database view tabs (Notion segmented underline) */}
-      <div className="border-b border-[#ede9e4] mt-7 mb-3 flex items-end justify-between">
+      <div className="border-b border-[#ede9e4] mt-7 mb-3 flex items-end justify-between flex-wrap gap-y-1">
         <div className="flex items-end gap-0.5">
           {([
             { k: "gallery" as const, label: "갤러리", icon: <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={1.6} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z"/></svg> },
@@ -1502,7 +1523,7 @@ function Instructors({ goToDetail }: { goToDetail: (id?: string) => void }) {
               </button>
             );
           })}
-          <button onClick={() => comingSoon("새 보기")} className="px-2.5 py-2 text-[13px] text-[#a4a097] hover:text-[#5d5b54] flex items-center gap-1">
+          <button onClick={() => comingSoon("새 보기")} className="px-2.5 py-2 text-[13px] text-[#a4a097] hover:text-[#5d5b54] hidden sm:flex items-center gap-1">
             <Icon p="plus" className="w-3 h-3" strokeWidth={2.2} />
             <span>새 보기</span>
           </button>
@@ -1694,8 +1715,8 @@ function Instructors({ goToDetail }: { goToDetail: (id?: string) => void }) {
 /* ── Instructor Table view (Notion DB table) ── */
 function InstructorTable({ rows, onRow, onAdd }: { rows: Instructor[]; onRow: (id: string) => void; onAdd: () => void }) {
   return (
-    <div className="border border-[#e5e3df] rounded-xl overflow-hidden bg-white">
-      <table className="w-full text-[12.5px]">
+    <div className="border border-[#e5e3df] rounded-xl overflow-x-auto bg-white">
+      <table className="w-full min-w-[640px] text-[12.5px]">
         <thead className="bg-[#fafaf9] border-b border-[#e5e3df] text-[11px] text-[#787671] font-semibold tracking-[0.5px] uppercase">
           <tr>
             {["강사", "카테고리", "등급", "월 매출", "강의", "NPS", "상태"].map((h, i) => (
@@ -1713,7 +1734,7 @@ function InstructorTable({ rows, onRow, onAdd }: { rows: Instructor[]; onRow: (i
                 <td className="px-4 py-2.5">
                   <div className="flex items-center gap-2.5">
                     <span className="w-6 h-6 rounded-md flex items-center justify-center text-[11px] font-semibold flex-shrink-0" style={{ background: m.bg, color: m.text }}>{i.name[0]}</span>
-                    <span className="font-medium text-[#1a1a1a] group-hover:underline">{i.name}</span>
+                    <span className="font-medium text-[#1a1a1a] group-hover:underline whitespace-nowrap">{i.name}</span>
                   </div>
                 </td>
                 <td className="px-4 py-2.5"><CategoryBadge cat={i.category} /></td>
@@ -1879,7 +1900,7 @@ function InstructorDetail({ inst, back }: { inst: Instructor; back: () => void }
           <div className="w-1.5 h-1.5 rounded-full bg-white/30" />
           <div className="w-1.5 h-1.5 rounded-full bg-white/40" />
         </div>
-        <div className="absolute top-4 left-1/2 -translate-x-1/2 max-w-[860px] w-full px-12 flex items-center justify-between">
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 max-w-[860px] w-full px-4 sm:px-8 lg:px-12 flex items-center justify-between">
           <button onClick={back} className="flex items-center gap-1.5 text-[12px] font-medium px-2 py-1 rounded-md bg-white/70 hover:bg-white text-[#37352f] transition">
             <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/></svg>
             강사 목록
@@ -1892,7 +1913,7 @@ function InstructorDetail({ inst, back }: { inst: Instructor; back: () => void }
       </div>
 
       {/* Page body — centered Notion document */}
-      <div className="max-w-[860px] mx-auto px-12">
+      <div className="max-w-[860px] mx-auto px-4 sm:px-8 lg:px-12">
         {/* Page icon offset above the cover */}
         <div className="relative -mt-[44px] mb-3 z-10">
           <div className="w-[72px] h-[72px] rounded-[10px] flex items-center justify-center font-semibold text-[28px] tracking-tight shadow-md ring-4 ring-white" style={{ background: cat.solid, color: "#fff" }}>
@@ -1908,11 +1929,11 @@ function InstructorDetail({ inst, back }: { inst: Instructor; back: () => void }
         </div>
 
         {/* Title */}
-        <div className="flex items-start justify-between gap-4 mb-5">
-          <div className="flex-1">
-            <h1 className="text-[40px] font-semibold tracking-[-0.8px] leading-[1.1] text-[#1a1a1a]">{inst.name}</h1>
+        <div className="flex items-start justify-between gap-3 sm:gap-4 mb-5">
+          <div className="flex-1 min-w-0">
+            <h1 className="text-[28px] sm:text-[28px] sm:text-[40px] font-semibold tracking-[-0.8px] leading-[1.1] text-[#1a1a1a]">{inst.name}</h1>
           </div>
-          <div className="flex items-center gap-1.5 flex-shrink-0 pt-2">
+          <div className="flex items-center gap-1.5 flex-shrink-0 pt-1 sm:pt-2">
             <button onClick={() => comingSoon("메시지 발송")} className="px-2.5 py-1.5 text-[12.5px] font-medium bg-white border border-[#c8c4be] rounded-md text-[#37352f] hover:bg-[#f6f5f4] transition">메시지</button>
             <button onClick={() => openModal({ kind: "assign-class", name: inst.name })} className="px-2.5 py-1.5 text-[12.5px] font-medium bg-[#5645d4] text-white rounded-md hover:bg-[#4534b3] transition">강의 배정</button>
           </div>
@@ -1986,7 +2007,7 @@ function InstructorDetail({ inst, back }: { inst: Instructor; back: () => void }
         </div>
 
         {/* Inline KPI strip — Notion synced-block style */}
-        <div className="grid grid-cols-4 gap-0 border border-[#e5e3df] rounded-xl overflow-hidden divide-x divide-[#ede9e4] mb-6">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-0 border border-[#e5e3df] rounded-xl overflow-hidden divide-x divide-[#ede9e4] divide-y sm:divide-y-0 mb-6">
           {[
             { l: "이번 달 매출", v: `₩${inst.revenue.toLocaleString()}만`, d: paused ? "휴직 중" : isNew ? "온보딩" : `+${Math.round(3 + rand(11) * 11)}%`, tone: paused || isNew ? "neutral" as const : "up" as const },
             { l: "YTD 누적", v: inst.ytd >= 10000 ? `₩${Math.floor(inst.ytd / 10000)}억 ${(inst.ytd % 10000).toLocaleString()}만` : `₩${inst.ytd.toLocaleString()}만`, d: "최근 12개월", tone: "neutral" as const },
@@ -2159,7 +2180,8 @@ function InstructorDetail({ inst, back }: { inst: Instructor; back: () => void }
               </div>
               <button onClick={() => comingSoon("정산 전체 내역")} className="text-[11px] text-[#5645d4] hover:underline">전체 내역 →</button>
             </div>
-            <table className="w-full text-[12px]">
+            <div className="overflow-x-auto">
+            <table className="w-full min-w-[440px] text-[12px]">
               <thead className="bg-[#fafaf9] border-b border-[#ede9e4] text-[10px] text-[#5d5b54] uppercase tracking-wider">
                 <tr>
                   <th className="text-left px-5 py-2.5 font-medium whitespace-nowrap">월</th>
@@ -2185,6 +2207,7 @@ function InstructorDetail({ inst, back }: { inst: Instructor; back: () => void }
                 ))}
               </tbody>
             </table>
+            </div>
           </div>
 
           <div className="col-span-12 lg:col-span-5 bg-white border border-[#e5e3df] rounded-xl p-5">
@@ -2235,7 +2258,7 @@ function Channels() {
   const grand = inboundTotal + outboundTotal;
 
   return (
-    <div className="px-12 py-8 max-w-[1180px] mx-auto">
+    <div className="px-4 sm:px-6 lg:px-12 py-5 sm:py-8 max-w-[1180px] mx-auto">
       {/* Notion page header */}
       <div className="mb-2">
         <div className="flex items-center gap-2 text-[12px] text-[#787671] mb-3 -ml-1">
@@ -2247,7 +2270,7 @@ function Channels() {
             <Icon p="chartPie" className="w-7 h-7 text-[#1aae39]" strokeWidth={1.6} />
           </div>
           <div className="flex-1 min-w-0 pt-1">
-            <h1 className="text-[40px] font-semibold tracking-[-0.8px] leading-[1.1] text-[#1a1a1a]">채널 분석</h1>
+            <h1 className="text-[28px] sm:text-[40px] font-semibold tracking-[-0.8px] leading-[1.1] text-[#1a1a1a]">채널 분석</h1>
             <p className="text-[14px] text-[#787671] leading-[1.5] mt-2">4개 수업 채널 · 자사 2 · 외부 연계 2 · 합산 ₩2.65억</p>
           </div>
         </div>
@@ -2273,7 +2296,7 @@ function Channels() {
       <div className="border-t border-[#ede9e4] mt-5 mb-6" />
 
       {/* Database view tabs */}
-      <div className="border-b border-[#ede9e4] mb-5 flex items-end justify-between">
+      <div className="border-b border-[#ede9e4] mb-5 flex items-end justify-between flex-wrap gap-y-1">
         <div className="flex items-end gap-0.5">
           {([
             { k: "summary", label: "요약", icon: <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={1.6} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z"/></svg> },
@@ -2283,14 +2306,14 @@ function Channels() {
             <button
               key={v.k}
               onClick={() => i !== 0 && comingSoon(`${v.label} 보기`)}
-              className={`relative px-2.5 py-2 text-[13.5px] flex items-center gap-1.5 transition ${i === 0 ? "text-[#1a1a1a] font-medium" : "text-[#787671] hover:text-[#37352f]"}`}
+              className={`relative px-2.5 py-2 text-[13.5px] flex items-center gap-1.5 whitespace-nowrap transition ${i === 0 ? "text-[#1a1a1a] font-medium" : "text-[#787671] hover:text-[#37352f]"}`}
             >
               <span className={i === 0 ? "text-[#37352f]" : "text-[#a4a097]"}>{v.icon}</span>
               {v.label}
               {i === 0 && <span className="absolute bottom-[-1px] left-2 right-2 h-[2px] bg-[#37352f] rounded-full" />}
             </button>
           ))}
-          <button onClick={() => comingSoon("새 보기")} className="px-2.5 py-2 text-[13px] text-[#a4a097] hover:text-[#5d5b54] flex items-center gap-1">
+          <button onClick={() => comingSoon("새 보기")} className="px-2.5 py-2 text-[13px] text-[#a4a097] hover:text-[#5d5b54] hidden sm:flex items-center gap-1">
             <Icon p="plus" className="w-3 h-3" strokeWidth={2.2} />
             <span>새 보기</span>
           </button>
@@ -2394,7 +2417,8 @@ function Channels() {
             <button onClick={() => comingSoon("필터 추가")} className="text-[11px] text-[#0075de] hover:underline">필터 추가 +</button>
           </div>
         </div>
-        <table className="w-full text-[12.5px]">
+        <div className="overflow-x-auto">
+        <table className="w-full min-w-[640px] text-[12.5px]">
           <thead className="bg-[#fafaf9] border-b border-[#ede9e4] text-[10px] text-[#5d5b54] uppercase tracking-wider">
             <tr>
               <th className="text-left px-5 py-3 font-medium">채널</th>
@@ -2434,6 +2458,7 @@ function Channels() {
             ))}
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   );
@@ -2457,7 +2482,7 @@ function PageHead({ icon, tint, color, title, subtitle }: { icon: keyof typeof I
           <span style={{ color }}><Icon p={icon} className="w-7 h-7" strokeWidth={1.6} /></span>
         </div>
         <div className="flex-1 min-w-0 pt-1">
-          <h1 className="text-[40px] font-semibold tracking-[-0.8px] leading-[1.1] text-[#1a1a1a]">{title}</h1>
+          <h1 className="text-[28px] sm:text-[40px] font-semibold tracking-[-0.8px] leading-[1.1] text-[#1a1a1a]">{title}</h1>
           <p className="text-[14px] text-[#787671] leading-[1.5] mt-2">{subtitle}</p>
         </div>
       </div>
@@ -2500,7 +2525,7 @@ function SchedulePage() {
   const { comingSoon, openModal } = useApp();
   const total = WEEK_SCHEDULE.reduce((a, d) => a + d.classes.length, 0);
   return (
-    <div className="px-12 py-8 max-w-[1180px] mx-auto">
+    <div className="px-4 sm:px-6 lg:px-12 py-5 sm:py-8 max-w-[1180px] mx-auto">
       <PageHead icon="calendar" tint={N.peach} color={N.orange} title="강의 일정" subtitle={`이번 주 · 총 ${total}건의 강의`} />
       <div className="border-t border-[#ede9e4] mb-5" />
 
@@ -2521,7 +2546,7 @@ function SchedulePage() {
       </div>
 
       {/* 주간 컬럼 그리드 */}
-      <div className="grid grid-cols-5 gap-2.5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2.5">
         {WEEK_SCHEDULE.map((day) => {
           const isToday = day.day.startsWith("목");
           return (
@@ -2568,7 +2593,7 @@ function SettlementPage({ goToDetail }: { goToDetail: (id?: string) => void }) {
   const won = (v: number) => `₩${v.toLocaleString()}만`;
 
   return (
-    <div className="px-12 py-8 max-w-[1180px] mx-auto">
+    <div className="px-4 sm:px-6 lg:px-12 py-5 sm:py-8 max-w-[1180px] mx-auto">
       <PageHead icon="banknote" tint={N.yellow} color="#9a7b2b" title="정산 관리" subtitle={`5월 정산 · 대상 강사 ${rows.length}명`} />
       <div className="border-t border-[#ede9e4] mb-6" />
 
@@ -2601,8 +2626,8 @@ function SettlementPage({ goToDetail }: { goToDetail: (id?: string) => void }) {
         subtitle="5월 · 매출 기준 정렬"
         action={<button onClick={() => blocked({ title: "정산 명세서 다운로드 기능\n전문가와 현장에서 직접 구현해볼 수 있어요", desc: "이 프로그램은 강의 이해를 돕기 위해 수강생의 실제 작품을 가볍게 재현한 예시예요. 강의에서는 어떤 기능이든 직접 설계하고 만들어보실 수 있어요.", flavor: "lock" })} className="text-[12px] text-[#0075de] hover:underline">명세서 내보내기</button>}
       />
-      <div className="bg-white border border-[#e5e3df] rounded-xl overflow-hidden">
-        <table className="w-full text-[12.5px]">
+      <div className="bg-white border border-[#e5e3df] rounded-xl overflow-x-auto">
+        <table className="w-full min-w-[560px] text-[12.5px]">
           <thead className="bg-[#fafaf9] border-b border-[#e5e3df] text-[11px] text-[#787671]">
             <tr>
               <th className="text-left px-5 py-2.5 font-medium whitespace-nowrap">강사</th>
@@ -2621,7 +2646,7 @@ function SettlementPage({ goToDetail }: { goToDetail: (id?: string) => void }) {
                   <td className="px-5 py-3">
                     <div className="flex items-center gap-2.5">
                       <span className="w-6 h-6 rounded-md flex items-center justify-center text-[11px] font-semibold flex-shrink-0" style={{ background: m.bg, color: m.text }}>{i.name[0]}</span>
-                      <span className="font-medium text-[#1a1a1a] group-hover:underline">{i.name}</span>
+                      <span className="font-medium text-[#1a1a1a] group-hover:underline whitespace-nowrap">{i.name}</span>
                     </div>
                   </td>
                   <td className="px-5 py-3"><CategoryBadge cat={i.category} /></td>
@@ -2670,7 +2695,7 @@ function ReviewsPage({ goToDetail }: { goToDetail: (id?: string) => void }) {
   const maxN = Math.max(...dist.map((d) => d.n), 1);
 
   return (
-    <div className="px-12 py-8 max-w-[1180px] mx-auto">
+    <div className="px-4 sm:px-6 lg:px-12 py-5 sm:py-8 max-w-[1180px] mx-auto">
       <PageHead icon="star" tint={N.cream} color={N.brown} title="리뷰 모니터링" subtitle={`평균 NPS ${avgNps} · 최근 리뷰 ${reviews.length}건`} />
       <div className="border-t border-[#ede9e4] mb-6" />
 
@@ -2746,7 +2771,7 @@ function ScreeningPage({ goToDetail }: { goToDetail: (id?: string) => void }) {
   const stageCount = (k: string) => applicants.filter((a) => a.stage.key === k).length;
 
   return (
-    <div className="px-12 py-8 max-w-[1180px] mx-auto">
+    <div className="px-4 sm:px-6 lg:px-12 py-5 sm:py-8 max-w-[1180px] mx-auto">
       <PageHead icon="clipboardCheck" tint={N.peach} color={N.orange} title="심사 중인 강사" subtitle={`지원 ${applicants.length}명 · 심사 진행 중`} />
       <div className="border-t border-[#ede9e4] mb-6" />
 
@@ -2776,40 +2801,41 @@ function ScreeningPage({ goToDetail }: { goToDetail: (id?: string) => void }) {
         {applicants.map(({ i, stage, applied }) => {
           const m = CAT_COLOR[i.category];
           return (
-            <div key={i.id} className="bg-white border border-[#e5e3df] rounded-xl p-4 flex items-center gap-4 hover:border-[#c8c4be] transition">
+            <div key={i.id} className="bg-white border border-[#e5e3df] rounded-xl p-4 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 hover:border-[#c8c4be] transition">
               <button onClick={() => goToDetail(i.id)} className="flex items-center gap-3 min-w-0 flex-1 text-left group">
                 <span className="w-11 h-11 rounded-xl flex items-center justify-center text-[16px] font-semibold flex-shrink-0 ring-2 ring-white shadow-sm" style={{ background: m.solid, color: "#fff" }}>{i.name[0]}</span>
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="text-[15px] font-semibold text-[#1a1a1a] group-hover:underline">{i.name}</span>
+                    <span className="text-[15px] font-semibold text-[#1a1a1a] group-hover:underline whitespace-nowrap">{i.name}</span>
                     <TierBadge tier={i.tier} />
                   </div>
-                  <div className="flex items-center gap-1.5 mt-1 text-[12px]">
-                    <span style={{ color: m.text }} className="font-medium">{i.category}</span>
+                  <div className="flex items-center gap-1.5 mt-1 text-[12px] min-w-0">
+                    <span style={{ color: m.text }} className="font-medium whitespace-nowrap">{i.category}</span>
                     <span className="text-[#bbb8b1]">·</span>
-                    <span className="text-[#787671] inline-flex items-center gap-1">
-                      <svg className="w-3 h-3 text-[#a4a097]" fill="none" stroke="currentColor" strokeWidth={1.7} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21" /></svg>
-                      {i.affiliation ?? "프리랜서"}
+                    <span className="text-[#787671] inline-flex items-center gap-1 min-w-0">
+                      <svg className="w-3 h-3 text-[#a4a097] flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={1.7} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21" /></svg>
+                      <span className="truncate">{i.affiliation ?? "프리랜서"}</span>
                     </span>
                   </div>
                 </div>
               </button>
 
-              <div className="hidden md:block text-right flex-shrink-0">
-                <div className="text-[10px] text-[#a4a097] uppercase tracking-wider mb-0.5">지원일</div>
-                <div className="text-[12px] text-[#37352f] tabular-nums">{applied}</div>
-              </div>
+              {/* 모바일: 아바타 아래 한 줄로 배치 */}
+              <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0 pl-14 sm:pl-0">
+                <div className="hidden md:block text-right">
+                  <div className="text-[10px] text-[#a4a097] uppercase tracking-wider mb-0.5">지원일</div>
+                  <div className="text-[12px] text-[#37352f] tabular-nums">{applied}</div>
+                </div>
 
-              <div className="flex-shrink-0">
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11.5px] font-medium" style={{ background: stage.tint, color: stage.color }}>
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11.5px] font-medium whitespace-nowrap" style={{ background: stage.tint, color: stage.color }}>
                   <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: stage.color }} />
                   {stage.key}
                 </span>
-              </div>
 
-              <div className="flex items-center gap-1.5 flex-shrink-0">
-                <button onClick={() => comingSoon("지원서 상세")} className="px-2.5 py-1.5 text-[12px] font-medium border border-[#c8c4be] rounded-md text-[#37352f] hover:bg-[#f6f5f4] transition">지원서</button>
-                <button onClick={() => pushToast({ variant: "success", title: `${i.name}님을 승인했어요`, desc: "온보딩 단계로 이동합니다. (데모)" })} className="px-2.5 py-1.5 text-[12px] font-medium bg-[#5645d4] text-white rounded-md hover:bg-[#4534b3] transition">승인</button>
+                <div className="flex items-center gap-1.5 ml-auto sm:ml-0">
+                  <button onClick={() => comingSoon("지원서 상세")} className="px-2.5 py-1.5 text-[12px] font-medium border border-[#c8c4be] rounded-md text-[#37352f] hover:bg-[#f6f5f4] transition whitespace-nowrap">지원서</button>
+                  <button onClick={() => pushToast({ variant: "success", title: `${i.name}님을 승인했어요`, desc: "온보딩 단계로 이동합니다. (데모)" })} className="px-2.5 py-1.5 text-[12px] font-medium bg-[#5645d4] text-white rounded-md hover:bg-[#4534b3] transition whitespace-nowrap">승인</button>
+                </div>
               </div>
             </div>
           );
@@ -2845,7 +2871,7 @@ function InboxPage({ goToDetail }: { goToDetail: (id?: string) => void }) {
   ];
 
   return (
-    <div className="px-12 py-8 max-w-[920px] mx-auto">
+    <div className="px-4 sm:px-6 lg:px-12 py-5 sm:py-8 max-w-[920px] mx-auto">
       <PageHead icon="inbox" tint={N.lavender} color={N.primary} title="받은편지함" subtitle={unreadCount > 0 ? `읽지 않은 알림 ${unreadCount}개` : "모든 알림을 확인했어요"} />
       <div className="border-t border-[#ede9e4] mb-4" />
 
@@ -2915,6 +2941,8 @@ function Lab5Inner() {
   // 뷰 전환 히스토리 스택 — 뒤로/앞으로 가기 지원
   const [history, setHistory] = useState<{ view: View; id: string }[]>([{ view: "dashboard", id: "i2" }]);
   const [ptr, setPtr] = useState(0);
+  // 모바일 사이드바 드로어 열림 상태
+  const [navOpen, setNavOpen] = useState(false);
   useEffect(() => {
     const v = new URLSearchParams(window.location.search).get("view") as View | null;
     if (v && ["dashboard", "instructors", "detail", "channels", "schedule", "settlement", "reviews", "screening", "inbox"].includes(v)) setHistory([{ view: v, id: "i2" }]);
@@ -2926,6 +2954,7 @@ function Lab5Inner() {
   const navigate = (v: View, id?: string) => {
     setHistory((h) => [...h.slice(0, ptr + 1), { view: v, id: id ?? cur.id }]);
     setPtr((p) => p + 1);
+    setNavOpen(false); // 모바일에서 화면 이동 시 드로어 닫기
   };
   const setView = (v: View) => navigate(v);
   const goToDetail = (id?: string) => navigate("detail", id);
@@ -2948,18 +2977,18 @@ function Lab5Inner() {
       : [WORKSPACE_CRUMB, CRUMB_MAP[view]];
 
   return (
-    <div className="overflow-x-auto min-h-screen">
-    <div className="h-screen flex flex-col bg-[#fafaf9] text-[#1a1a1a] overflow-hidden min-w-[1080px]" style={{ fontFamily: FONT }}>
+    <div className="h-screen flex flex-col bg-[#fafaf9] text-[#1a1a1a] overflow-hidden" style={{ fontFamily: FONT }}>
       {/* 예시 프로그램 안내 띠배너 */}
-      <div className="flex-shrink-0 bg-[#FC5D11] text-white px-4 py-1.5 flex items-center justify-center gap-2 text-[12px]">
-        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-white/20 text-[10.5px] font-semibold tracking-wide">예시</span>
-        <span className="text-white/90">수강생의 실제 작품을 가볍게 재현한 예시 프로그램입니다. 강의에서는 내게 필요한 프로그램을 직접 설계하고 만들어보실 수 있어요.</span>
-        <a href="https://event.rememberapp.co.kr/academy/2days_claude" target="_blank" rel="noopener noreferrer" className="flex-shrink-0 ml-2 px-3 py-1 rounded bg-white text-[#FC5D11] text-[11.5px] font-semibold hover:bg-white/90 transition whitespace-nowrap">강의 보러 가기 →</a>
+      <div className="flex-shrink-0 bg-[#FC5D11] text-white px-3 sm:px-4 py-1.5 flex items-center justify-center gap-2 text-[11px] sm:text-[12px]">
+        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-white/20 text-[10.5px] font-semibold tracking-wide flex-shrink-0">예시</span>
+        <span className="text-white/90 hidden sm:inline">수강생의 실제 작품을 가볍게 재현한 예시 프로그램입니다. 강의에서는 내게 필요한 프로그램을 직접 설계하고 만들어보실 수 있어요.</span>
+        <span className="text-white/90 sm:hidden truncate">수강생 작품을 재현한 예시 프로그램이에요.</span>
+        <a href="https://event.rememberapp.co.kr/academy/2days_claude" target="_blank" rel="noopener noreferrer" className="flex-shrink-0 sm:ml-2 px-2.5 sm:px-3 py-1 rounded bg-white text-[#FC5D11] text-[11px] sm:text-[11.5px] font-semibold hover:bg-white/90 transition whitespace-nowrap">강의 보러 가기 →</a>
       </div>
-      <div className="flex flex-1 overflow-hidden">
-      <Sidebar view={view} setView={setView} goToDetail={goToDetail} />
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <Topbar view={view} breadcrumb={breadcrumb} goBack={goBack} goForward={goForward} canBack={ptr > 0} canForward={ptr < history.length - 1} />
+      <div className="flex flex-1 overflow-hidden relative">
+      <Sidebar view={view} setView={setView} goToDetail={goToDetail} mobileOpen={navOpen} closeMobile={() => setNavOpen(false)} />
+      <div className="flex-1 flex flex-col overflow-hidden min-w-0">
+        <Topbar view={view} breadcrumb={breadcrumb} goBack={goBack} goForward={goForward} canBack={ptr > 0} canForward={ptr < history.length - 1} onMenu={() => setNavOpen(true)} />
         <main className="flex-1 overflow-hidden">
           {view === "dashboard" && <div className="h-full overflow-y-auto"><Dashboard goToDetail={goToDetail} /></div>}
           {view === "instructors" && <div className="h-full overflow-y-auto"><Instructors goToDetail={goToDetail} /></div>}
@@ -2973,7 +3002,6 @@ function Lab5Inner() {
         </main>
       </div>
       </div>
-    </div>
     </div>
   );
 }
