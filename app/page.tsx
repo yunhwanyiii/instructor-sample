@@ -1948,10 +1948,11 @@ function InstructorDetail({ inst, back }: { inst: Instructor; back: () => void }
               icon: "users", label: "카테고리",
               value: <CategoryBadge cat={inst.category} />,
             },
-            {
+            // 심사 중인 강사는 등급 타이틀을 노출하지 않음
+            ...(inst.status === "screening" ? [] : [{
               icon: "star", label: "강사 등급",
               value: <TierBadge tier={inst.tier} />,
-            },
+            }]),
             {
               icon: "users", label: "원 소속",
               value: (() => {
@@ -2809,7 +2810,6 @@ function ScreeningPage({ goToDetail }: { goToDetail: (id?: string) => void }) {
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
                     <span className="text-[15px] font-semibold text-[#1a1a1a] group-hover:underline whitespace-nowrap">{i.name}</span>
-                    <TierBadge tier={i.tier} />
                   </div>
                   <div className="flex items-center gap-1.5 mt-1 text-[12px] min-w-0">
                     <span style={{ color: m.text }} className="font-medium whitespace-nowrap">{i.category}</span>
