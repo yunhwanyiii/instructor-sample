@@ -1414,23 +1414,25 @@ function Dashboard({ goToDetail }: { goToDetail: (id?: string) => void }) {
           </div>
           <div className="space-y-3">
             {WEEK_SCHEDULE.map((day) => (
-              <div key={day.day} className="flex items-start gap-3">
-                <div className="w-20 flex-shrink-0 pt-1">
+              <div key={day.day} className="flex items-start gap-2 sm:gap-3">
+                <div className="w-12 sm:w-20 flex-shrink-0 pt-1">
                   <div className="text-[11px] font-semibold text-[#1a1a1a]">{day.day}</div>
                   <div className="text-[10px] text-[#a4a097]">{day.classes.length}건</div>
                 </div>
-                <div className="flex-1 space-y-1.5">
+                <div className="flex-1 min-w-0 space-y-1.5">
                   {day.classes.map((c, i) => {
                     const meta = CAT_COLOR[c.cat];
                     return (
                       <div key={i} onClick={() => comingSoon("강의 상세보기")} className="flex items-center gap-2 p-2 rounded-lg border border-[#ede9e4] hover:border-[#c8c4be] transition cursor-pointer">
-                        <div className="w-1 h-8 rounded-full" style={{ background: meta.solid }} />
-                        <div className="text-[10px] font-mono text-[#787671] w-10">{c.time}</div>
+                        <div className="w-1 h-8 rounded-full flex-shrink-0" style={{ background: meta.solid }} />
+                        <div className="text-[10px] font-mono text-[#787671] w-10 flex-shrink-0">{c.time}</div>
                         <div className="flex-1 min-w-0">
                           <div className="text-[12px] font-medium text-[#1a1a1a] truncate">{c.title}</div>
-                          <div className="text-[10px] text-[#a4a097]">{c.inst} · {c.channel}</div>
+                          <div className="text-[10px] text-[#a4a097] truncate">{c.inst} · {c.channel}</div>
                         </div>
-                        <CategoryBadge cat={c.cat} />
+                        <span className="hidden min-[400px]:inline-flex flex-shrink-0">
+                          <CategoryBadge cat={c.cat} />
+                        </span>
                       </div>
                     );
                   })}
